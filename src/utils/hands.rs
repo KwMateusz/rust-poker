@@ -65,7 +65,21 @@ impl CardComparer {
         return removed_repeating_duplicates
     }
 
-    
+    pub fn check_three_of_a_kind(cards: &mut Vec<Card>) -> Hands {
+        
+        let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
+        let mut duplicated_figures: Vec<Figure> = CardComparer::get_duplicated_card(&mut figures);
+        let mut duplicated_figures: Vec<Figure> = CardComparer::get_duplicated_card(&mut duplicated_figures);
+
+        duplicated_figures.sort_by(|a,b| b.cmp(&a));
+
+        if duplicated_figures.len() > 0 {
+            return Hands::ThreeOfAKind(*&duplicated_figures[0]);
+        }
+        
+        Hands::None
+    }
+
     pub fn check_one_pair(cards: &mut Vec<Card>) -> Hands {
 
         let descending_pairs: Vec<Figure> = CardComparer::descending_pairs(cards);
@@ -110,6 +124,64 @@ mod card_comparer_tests {
         cards
     }
 
+
+
+
+    // CHECK THREE OF A KIND
+
+    #[test]
+    fn check_three_of_a_kind_three_kings_should_return_hands_three_of_a_kind() {
+        let mut card1: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
+        let mut card2: Card = Card {suit: Suit::Hearts, figure: Figure::King};
+        let mut card3: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
+        let mut card4: Card = Card {suit: Suit::Hearts, figure: Figure::King};
+        let mut card5: Card = Card {suit: Suit::Hearts, figure: Figure::Seven};
+        let mut card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
+        let mut card7: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_three_of_a_kind(&mut cards), 
+            Hands::ThreeOfAKind(Figure::King)
+        );
+    }
+
+    #[test]
+    fn check_three_of_a_kind_two_kings_and_four_six_should_return_hands_three_of_a_kind() {
+        let mut card1: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
+        let mut card2: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
+        let mut card3: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
+        let mut card4: Card = Card {suit: Suit::Hearts, figure: Figure::King};
+        let mut card5: Card = Card {suit: Suit::Hearts, figure: Figure::Seven};
+        let mut card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
+        let mut card7: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_three_of_a_kind(&mut cards), 
+            Hands::ThreeOfAKind(Figure::Six)
+        );
+    }
+
+    #[test]
+    fn check_three_of_a_kind_three_Jacks_should_return_hands_three_of_a_kind() {
+        let mut card1: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+        let mut card2: Card = Card {suit: Suit::Hearts, figure: Figure::Seven};
+        let mut card3: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
+        let mut card4: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+        let mut card5: Card = Card {suit: Suit::Hearts, figure: Figure::Three};
+        let mut card6: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+        let mut card7: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_three_of_a_kind(&mut cards), 
+            Hands::ThreeOfAKind(Figure::Jack)
+        );
+    }
 
     // CHECK TWO PAIRS
 
