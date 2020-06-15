@@ -65,6 +65,34 @@ impl CardComparer {
         return removed_repeating_duplicates
     }
 
+    pub fn check_flush(cards: &mut Vec<Card>) -> Hands {
+        
+        let mut suits: Vec<Suit> = cards.iter().map(|x| x.suit).collect();
+        suits.sort_by(|a,b| b.cmp(&a));
+
+        let mut suit_previous: i8 = 0;
+        let mut suit_actual: i8 = 0;
+        let mut counter: u8 = 1;
+
+        for (_i, suit) in suits.iter().enumerate() {
+            suit_actual = *suit as i8;
+            if (_i > 0) {
+                if (suit_actual == suit_previous) {
+                    if (counter == 4) {
+                        return Hands::Flush(*suit)
+                    }
+                    counter += 1;
+                }
+                else {
+                    counter = 1;
+                }
+            }
+            suit_previous = suit_actual;
+        }
+
+        Hands::None
+    }
+
     pub fn check_straight(cards: &mut Vec<Card>) -> Hands {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
@@ -150,6 +178,44 @@ mod card_comparer_tests {
         cards.push(card7);
 
         cards
+    }
+
+    // CHECK FLUSH
+
+    #[test]
+    fn check_flush_five_hearts_with_ace_should_return_hands_flush() {
+        let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
+        let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+        let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Eight};
+        let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Nine};
+        let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Ten};
+        let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Seven};
+        let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Three};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_flush(&mut cards), 
+            Hands::Flush(Suit::Hearts)
+        );
+    }
+
+    #[test]
+    fn check_flush_five_Clubs_with_Jack_should_return_hands_flush() {
+        let card1: Card = Card {suit: Suit::Clubs, figure: Figure::Ten};
+        let card2: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+        let card3: Card = Card {suit: Suit::Diamonds, figure: Figure::Eight};
+        let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card5: Card = Card {suit: Suit::Clubs, figure: Figure::Ten};
+        let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Four};
+        let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Three};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_flush(&mut cards), 
+            Hands::Flush(Suit::Clubs)
+        );
     }
 
     // CHECK STRAIGHT

@@ -19,12 +19,12 @@ use std::fmt;
 //     }
 // }
 
-#[derive(Debug, Copy, Clone, IntoEnumIterator, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, IntoEnumIterator, Eq, Ord, PartialEq, PartialOrd)]
 pub enum Suit {
-    Clubs,
-    Diamonds,
-    Hearts,
-    Spades,
+    Clubs = 2,
+    Diamonds = 3,
+    Hearts = 4,
+    Spades = 1,
 }
 
 #[derive(Debug, Copy, Clone, IntoEnumIterator, Eq, Ord, PartialEq, PartialOrd)]
