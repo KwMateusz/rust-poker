@@ -1,6 +1,8 @@
 use itertools::Itertools;
+use std::collections::HashMap;
 
 use crate::utils::card::*;
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Hands {
@@ -21,14 +23,7 @@ pub enum Hands {
 pub struct CardComparer {}
 
 impl CardComparer {
-    // pub fn classificate_cards(cards: &Vec<Card>) -> Hands {
-    //     let card: Card = Card {
-    //         suit: Suit::Hearts,
-    //         figure: Figure::Ace,
-    //     };
-    //     Hands::HighCard(card)
-    // }
-
+    
     pub fn get_duplicated_card(figures: &mut Vec<Figure>) -> Vec<Figure> {
         let mut already_seen = vec![];
         figures.retain(|item| match already_seen.contains(item) {
@@ -64,6 +59,67 @@ impl CardComparer {
 
         return removed_repeating_duplicates
     }
+
+    pub fn check_four_of_a_kind(cards: &mut Vec<Card>) -> Hands {
+        
+        let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
+        figures.sort_by(|a,b| b.cmp(&a));
+
+        let mut duplicated_figures: Vec<Figure> = CardComparer::get_duplicated_card(&mut figures);
+        let mut duplicated_figures: Vec<Figure> = CardComparer::get_duplicated_card(&mut duplicated_figures);
+        let mut duplicated_figures: Vec<Figure> = CardComparer::get_duplicated_card(&mut duplicated_figures);
+       
+        duplicated_figures.sort_by(|a,b| b.cmp(&a));
+
+        if duplicated_figures.len() > 0 {
+            return Hands::FourOfAKind(*&duplicated_figures[0]);
+        }
+      
+        Hands::None
+    }
+
+    pub fn check_full_house(cards: &mut Vec<Card>) -> Hands {
+        
+        let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
+        figures.sort_by(|a,b| b.cmp(&a));
+
+        let mut previous_figure: i8 = 0;
+        let mut figure_index: i8 = 0;
+
+        let mut counter: u8 = 1;
+        let mut three_cards_figure: Figure = Figure::None;
+        let mut two_cards_figure: Figure = Figure::None;
+
+        for (_i, figure) in figures.iter().enumerate() {
+            figure_index = *figure as i8;
+            if (_i > 0) {
+                if (previous_figure == figure_index) {
+                    counter += 1;
+                    if (counter > 2) {
+                        if (three_cards_figure == Figure::None) {
+                            three_cards_figure = figures[_i];
+                        }
+                    }
+                    if (counter > 1) {
+                        if (two_cards_figure == Figure::None) {
+                            two_cards_figure = figures[_i];
+                        }
+                    }
+                }
+                else {
+                    counter = 1;
+                }
+            }
+           
+            previous_figure = figure_index;
+        }
+        if (three_cards_figure != Figure::None && two_cards_figure != Figure::None) {
+            return Hands::FullHouse(three_cards_figure)
+        }
+
+        Hands::None
+    }
+
 
     pub fn check_flush(cards: &mut Vec<Card>) -> Hands {
         
@@ -178,6 +234,154 @@ mod card_comparer_tests {
         cards.push(card7);
 
         cards
+    }
+
+     // CHECK FOUR OF A KIND
+
+     #[test]
+     fn check_four_a_kind_with_four_jacks_should_return_hands_four_of_a_kind() {
+         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+         let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+         let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+ 
+         let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+ 
+         assert_eq!(
+             CardComparer::check_four_of_a_kind(&mut cards), 
+             Hands::FourOfAKind(Figure::Jack)
+         );
+     }
+
+     #[test]
+     fn check_four_a_kind_with_none_four_should_return_hands_none() {
+         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+         let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+         let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+ 
+         let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+ 
+         assert_eq!(
+             CardComparer::check_four_of_a_kind(&mut cards), 
+             Hands::None
+         );
+     }
+
+     #[test]
+     fn check_four_a_kind_with_four_5_should_return_hands_four_of_a_kind() {
+         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+         let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Nine};
+         let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Five};
+ 
+         let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+ 
+         assert_eq!(
+             CardComparer::check_four_of_a_kind(&mut cards), 
+             Hands::FourOfAKind(Figure::Five)
+         );
+     }
+
+    // CHECK FULL HOUSE
+
+    #[test]
+    fn check_full_house_with_two_5_and_three_jacks_should_return_hands_full_house() {
+        let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+        let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+        let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Nine};
+        let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+        let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+        let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Five};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_full_house(&mut cards), 
+            Hands::FullHouse(Figure::Jack)
+        );
+    }
+
+    #[test]
+    fn check_full_house_with_three_8_and_three_4_should_return_hands_full_house() {
+        let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
+        let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Eight};
+        let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
+        let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
+        let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Eight};
+        let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Eight};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_full_house(&mut cards), 
+            Hands::FullHouse(Figure::Eight)
+        );
+    }
+
+    #[test]
+    fn check_full_house_with_two_7_and_four_2_should_return_hands_full_house() {
+        let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+        let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Seven};
+        let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Seven};
+        let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Two};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_full_house(&mut cards), 
+            Hands::FullHouse(Figure::Two)
+        );
+    }
+
+    #[test]
+    fn check_full_house_with_two_7_and_three_2_should_return_hands_full_house() {
+        let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Three};
+        let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+        let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Seven};
+        let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Seven};
+        let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Two};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_full_house(&mut cards), 
+            Hands::FullHouse(Figure::Two)
+        );
+    }
+
+    #[test]
+    fn check_full_house_with_two_5_and_two_jacks_should_return_hands_None() {
+        let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
+        let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+        let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+        let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Nine};
+        let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Queen};
+        let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+        let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Five};
+
+        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+
+        assert_eq!(
+            CardComparer::check_full_house(&mut cards), 
+            Hands::None
+        );
     }
 
     // CHECK FLUSH

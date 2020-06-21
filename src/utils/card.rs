@@ -29,6 +29,7 @@ pub enum Suit {
 
 #[derive(Debug, Copy, Clone, IntoEnumIterator, Eq, Ord, PartialEq, PartialOrd)]
 pub enum Figure {
+    None = 1,
     Ace = 14,
     Two = 2,
     Three = 3,
@@ -53,6 +54,7 @@ pub struct Card {
 impl fmt::Display for Figure {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Figure::None => write!(f, "0"),
             Figure::Ace => write!(f, "A"),
             Figure::Two => write!(f, "2"),
             Figure::Three => write!(f, "3"),
