@@ -2,6 +2,7 @@ use itertools::Itertools;
 use std::collections::HashMap;
 
 use crate::utils::card::*;
+use crate::utils::player::Player;
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -24,6 +25,34 @@ pub struct CardComparer {}
 
 impl CardComparer {
     
+    pub fn get_better_hands<'a>(players: &'a mut Vec<&'a mut Player>, card1: Card, card2: Card, card3: Card, turn: Card, river: Card ) {
+        for player in players {
+            let mut cards = vec![];
+            if let Some((c1, c2)) = &player.hand {
+                cards.push(c1);
+                cards.push(c2);
+                cards.push(&card1);
+                cards.push(&card2);
+                cards.push(&card3);
+                cards.push(&turn);
+                cards.push(&river);
+            } 
+
+            CardComparer::check_high_card(&mut cards);
+            CardComparer::check_one_pair(&mut cards);
+            CardComparer::check_two_pairs(&mut cards);
+            CardComparer::check_three_of_a_kind(&mut cards);
+            CardComparer::check_straight(&mut cards);
+            CardComparer::check_flush(&mut cards);
+            CardComparer::check_full_house(&mut cards);
+
+            for card in cards {
+                print!("card: {} \t", card);
+            }
+            println!("");
+        }
+    } 
+
     pub fn get_duplicated_card(figures: &mut Vec<Figure>) -> Vec<Figure> {
         let mut already_seen = vec![];
         figures.retain(|item| match already_seen.contains(item) {
@@ -50,7 +79,7 @@ impl CardComparer {
         figures.to_vec()
     }
 
-    pub fn descending_pairs(cards: &mut Vec<Card>) -> Vec<Figure> {
+    pub fn descending_pairs(cards: &mut Vec<&Card>) -> Vec<Figure> {
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         let mut duplicated_cards: Vec<Figure> = CardComparer::get_duplicated_card(&mut figures);
         let mut removed_repeating_duplicates: Vec<Figure> = CardComparer::remove_duplicated_card(&mut duplicated_cards);
@@ -60,7 +89,7 @@ impl CardComparer {
         return removed_repeating_duplicates
     }
 
-    pub fn check_four_of_a_kind(cards: &mut Vec<Card>) -> Hands {
+    pub fn check_four_of_a_kind(cards: &mut Vec<&Card>) -> Hands {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         figures.sort_by(|a,b| b.cmp(&a));
@@ -78,7 +107,7 @@ impl CardComparer {
         Hands::None
     }
 
-    pub fn check_full_house(cards: &mut Vec<Card>) -> Hands {
+    pub fn check_full_house(cards: &mut Vec<&Card>) -> Hands {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         figures.sort_by(|a,b| b.cmp(&a));
@@ -114,14 +143,15 @@ impl CardComparer {
             previous_figure = figure_index;
         }
         if (three_cards_figure != Figure::None && two_cards_figure != Figure::None) {
+            println!("FullHouse!");
             return Hands::FullHouse(three_cards_figure)
         }
-
+        println!("Hands::None!");
         Hands::None
     }
 
 
-    pub fn check_flush(cards: &mut Vec<Card>) -> Hands {
+    pub fn check_flush(cards: &mut Vec<&Card>) -> Hands {
         
         let mut suits: Vec<Suit> = cards.iter().map(|x| x.suit).collect();
         suits.sort_by(|a,b| b.cmp(&a));
@@ -135,6 +165,7 @@ impl CardComparer {
             if (_i > 0) {
                 if (suit_actual == suit_previous) {
                     if (counter == 4) {
+                        println!("Flush!");
                         return Hands::Flush(*suit)
                     }
                     counter += 1;
@@ -145,11 +176,11 @@ impl CardComparer {
             }
             suit_previous = suit_actual;
         }
-
+        println!("Hands:None!");
         Hands::None
     }
 
-    pub fn check_straight(cards: &mut Vec<Card>) -> Hands {
+    pub fn check_straight(cards: &mut Vec<&Card>) -> Hands {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         figures.sort_by(|a,b| b.cmp(&a));
@@ -163,6 +194,7 @@ impl CardComparer {
             if (_i > 0) {
                 if (figure_index_previous - figure_index == 1) {
                     if (counter == 4) {
+                        println!("Straight!");
                         return Hands::Straight(figures[_i - (4 as usize)])
                     }
                     counter += 1;
@@ -173,11 +205,11 @@ impl CardComparer {
             }
             figure_index_previous = figure_index;
         }
-       
+        println!("Hands:None!");
         Hands::None
     }
 
-    pub fn check_three_of_a_kind(cards: &mut Vec<Card>) -> Hands {
+    pub fn check_three_of_a_kind(cards: &mut Vec<&Card>) -> Hands {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         let mut duplicated_figures: Vec<Figure> = CardComparer::get_duplicated_card(&mut figures);
@@ -186,34 +218,40 @@ impl CardComparer {
         duplicated_figures.sort_by(|a,b| b.cmp(&a));
 
         if duplicated_figures.len() > 0 {
+            println!("Three of a kind!");
             return Hands::ThreeOfAKind(*&duplicated_figures[0]);
         }
-        
+        println!("Hands:None!");
         Hands::None
     }
 
-    pub fn check_one_pair(cards: &mut Vec<Card>) -> Hands {
+    pub fn check_one_pair(cards: &mut Vec<&Card>) -> Hands {
 
         let descending_pairs: Vec<Figure> = CardComparer::descending_pairs(cards);
 
         if descending_pairs.len() > 0 {
+            println!("OnePair!");
             return Hands::OnePair(*&descending_pairs[0])
         }
+        println!("Hands:None!");
         Hands::None
     }
 
-    pub fn check_two_pairs(cards: &mut Vec<Card>) -> Hands {
+    pub fn check_two_pairs(cards: &mut Vec<&Card>) -> Hands {
 
         let descending_pairs: Vec<Figure> = CardComparer::descending_pairs(cards);
 
         if descending_pairs.len() > 1 {
+            println!("TwoPairs!");
             return Hands::TwoPairs(*&descending_pairs[0], *&descending_pairs[1])
         }
+        println!("Hands:None!");
         Hands::None
     }
 
-    pub fn check_high_card(cards: &mut Vec<Card>) -> Hands {
+    pub fn check_high_card(cards: &mut Vec<&Card>) -> Hands {
         cards.sort_by(|a,b| b.figure.cmp(&a.figure));
+        println!("HighCard!");
         Hands::HighCard(*&cards[0].figure)
     }
 }
@@ -367,7 +405,7 @@ mod card_comparer_tests {
     }
 
     #[test]
-    fn check_full_house_with_two_5_and_two_jacks_should_return_hands_None() {
+    fn check_full_house_with_two_5_and_two_jacks_should_return_hands_none() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
@@ -405,7 +443,7 @@ mod card_comparer_tests {
     }
 
     #[test]
-    fn check_flush_five_Clubs_with_Jack_should_return_hands_flush() {
+    fn check_flush_five_clubs_with_jack_should_return_hands_flush() {
         let card1: Card = Card {suit: Suit::Clubs, figure: Figure::Ten};
         let card2: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
         let card3: Card = Card {suit: Suit::Diamonds, figure: Figure::Eight};
@@ -425,7 +463,7 @@ mod card_comparer_tests {
     // CHECK STRAIGHT
 
     #[test]
-    fn check_straight_straight_from_Jack_should_return_hands_straight() {
+    fn check_straight_straight_from_jack_should_return_hands_straight() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Eight};
@@ -443,7 +481,7 @@ mod card_comparer_tests {
     }
 
     #[test]
-    fn check_straight_straight_from_Ace_should_return_hands_straight() {
+    fn check_straight_straight_from_ace_should_return_hands_straight() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::King};
@@ -514,7 +552,8 @@ mod card_comparer_tests {
         );
     }
 
-    fn check_straight_straight_from_9_with_pairs_of_Kings_should_return_hands_straight() {
+    #[test]
+    fn check_straight_straight_from_9_with_pairs_of_kings_should_return_hands_straight() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Nine};
@@ -570,7 +609,7 @@ mod card_comparer_tests {
     }
 
     #[test]
-    fn check_three_of_a_kind_three_Jacks_should_return_hands_three_of_a_kind() {
+    fn check_three_of_a_kind_three_jacks_should_return_hands_three_of_a_kind() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Seven};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
@@ -626,7 +665,7 @@ mod card_comparer_tests {
     }
 
     #[test]
-    fn check_two_pairs_four_Kings_and_two_Aces_should_return_hands_two_pairs() {
+    fn check_two_pairs_four_kings_and_two_aces_should_return_hands_two_pairs() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::King};
@@ -664,7 +703,7 @@ mod card_comparer_tests {
     }
     
     #[test]
-    fn check_one_pair_four_Kings_should_return_hands_one_pair_kings() {
+    fn check_one_pair_four_kings_should_return_hands_one_pair_kings() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::King};
@@ -682,7 +721,7 @@ mod card_comparer_tests {
     }
 
     #[test]
-    fn check_one_pair_three_Kings_and_two_Aces_should_return_hands_one_pair_ace() {
+    fn check_one_pair_three_kings_and_two_aces_should_return_hands_one_pair_ace() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Three};
@@ -700,7 +739,7 @@ mod card_comparer_tests {
     }
 
     #[test]
-    fn check_one_pair_two_Aces_and_three_Kings_should_return_hands_one_pair_ace() {
+    fn check_one_pair_two_aces_and_three_kings_should_return_hands_one_pair_ace() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
@@ -718,7 +757,7 @@ mod card_comparer_tests {
     }
 
     #[test]
-    fn check_one_pair_two_Aces_and_two_6_and_two_queens_should_return_hands_one_pair_ace() {
+    fn check_one_pair_two_aces_and_two_6_and_two_queens_should_return_hands_one_pair_ace() {
         let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Queen};
         let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Queen};
         let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Six};

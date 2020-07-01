@@ -55,7 +55,7 @@ impl Player {
     }
 
     pub fn make_decision(&mut self, to_call: &mut u32) {
-        println!("Player {} makes action", self.name);
+        println!("***** Player {} makes action *****", self.name);
         self.show_cards();
 
         'decision: loop {

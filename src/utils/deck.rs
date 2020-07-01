@@ -14,11 +14,13 @@ impl Deck {
         let mut cards: Vec<Card> = Vec::new();
         for suit in Suit::into_enum_iter() {
             for figure in Figure::into_enum_iter() {
-                let card = Card {
-                    suit: *(&suit),
-                    figure: *(&figure),
-                };
-                cards.push(card);
+                if (figure != Figure::None){
+                    let card = Card {
+                        suit: *(&suit),
+                        figure: *(&figure),
+                    };
+                    cards.push(card);
+                }
             }
         }
 

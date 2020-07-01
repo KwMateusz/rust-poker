@@ -40,22 +40,35 @@ impl Round {
     }
 
     pub fn show_cards(&self, round_number: u32) {
+        let mut card_display: String = String::from("");
+        
         if round_number == 0u32 {
-            println!("Blind round");
+            let formatter  = format!("===== Blind round =====\n");
+            card_display.push_str(&*formatter);
+            //println!("===== Blind round =====\n");
         } else if round_number > 3 {
-            println!("Round ended.");
+            let formatter  = format!("Round ended.");
+            card_display.push_str(&*formatter);
+            //println!("Round ended.");
         } else {
             let (_1, _2, _3) = self.table.flop.as_ref().unwrap();
-            println!("Flop: {}\t{}\t{}", _1, _2, _3);
+            let formatter  = format!("===== Flop: {}\t{}\t{} =====\n", _1, _2, _3);
+            card_display.push_str(&*formatter);
+            //println!("===== Flop: {}\t{}\t{} =====\n", _1, _2, _3);
             if round_number > 1 {
                 let _4 = self.table.turn.as_ref().unwrap();
-                println!("Turn: {}", _4);
+                let formatter  = format!("===== Turn: {} =====\n", _4);
+                card_display.push_str(&*formatter);
+                //println!("===== Turn: {} =====\n", _4);
             }
             if round_number > 2 {
                 let _5 = self.table.river.as_ref().unwrap();
-                println!("River: {}", _5);
+                let formatter  = format!("===== River: {} =====\n", _5);
+                card_display.push_str(&*formatter);
+                //println!("===== River: {} =====\n", _5);
             }
         };
+        println!("{}", card_display);
     }
 
     pub fn deal_cards(&mut self, players: &mut Vec<&mut Player>) {
@@ -65,9 +78,10 @@ impl Round {
                 p.hand = Some((self.deck.take_card(), self.deck.take_card()));
                 println!("Croupier dealt cards to {}", p.name);
             } else {
-                println!("Cards have already been dealt.");
+                println!("Cards have already been dealt.\n");
             };
         }
+        println!("");
         // Deal cards for table
         if self.table.is_clean() {
             self.table.flop = Some((self.deck.take_card(), self.deck.take_card(), self.deck.take_card()));
@@ -85,7 +99,8 @@ impl Round {
 
     pub fn run(&mut self, players_ptr: &mut Vec<&mut Player>) {
         let mut round_part_number: u32= 0; // 0: "Blinds", 1: "Flop", 2: "Turn", 3: "River"
-        'round: while round_part_number < 4 || players_ptr.len() != 1 {
+        'round: while round_part_number < 4 && players_ptr.len() > 1 {
+            println!("{}", players_ptr.len());
             self.new_sub_round(players_ptr);
             self.show_cards(round_part_number);
 
@@ -117,11 +132,13 @@ impl Round {
     }
 
     pub fn check_round_winner<'a>(&mut self, players: &'a mut Vec<&'a mut Player>) {
+        println!("players.len: {}", players.len());
+        
         if players.len() == 1 {
             self.table.collect_reward(players.pop().unwrap());
         } else {
-            let winner = self.table.compare_cards(players);
-            self.table.collect_reward(winner);
+            self.table.compare_cards(players);
+            //self.table.collect_reward(winner);
         }
     }
 }

@@ -19,7 +19,7 @@ fn main() {
         
     let mut game: Game = Game::new();
     game.add_players();
-    println!("All players are ready! Let's start the game!");
+    println!("All players are ready! Let's start the game!\n");
     game.run();
     println!("Thank you for your time! :)");
 }
