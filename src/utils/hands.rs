@@ -38,56 +38,24 @@ impl CardComparer {
                 cards.push(&river);
             } 
 
-            CardComparer::check_high_card(&mut cards);
-            CardComparer::check_one_pair(&mut cards);
-            CardComparer::check_two_pairs(&mut cards);
-            CardComparer::check_three_of_a_kind(&mut cards);
-            CardComparer::check_straight(&mut cards);
-            CardComparer::check_flush(&mut cards);
-            CardComparer::check_full_house(&mut cards);
+            let mut hands: Hands = Hands::None;
+
+            hands = CardComparer::check_high_card(&mut cards);
+            hands = CardComparer::check_one_pair(&mut cards);
+            hands = CardComparer::check_two_pairs(&mut cards);
+            hands = CardComparer::check_three_of_a_kind(&mut cards);
+            hands = CardComparer::check_straight(&mut cards);
+            hands = CardComparer::check_flush(&mut cards);
+            hands = CardComparer::check_full_house(&mut cards);
+            hands = CardComparer::check_four_of_a_kind(&mut cards);
 
             for card in cards {
                 print!("card: {} \t", card);
             }
             println!("");
+            println!("{:?}", hands);
         }
     } 
-
-    pub fn get_duplicated_card(figures: &mut Vec<Figure>) -> Vec<Figure> {
-        let mut already_seen = vec![];
-        figures.retain(|item| match already_seen.contains(item) {
-            true => true,
-            _ => {
-                already_seen.push(item.clone());
-                false
-            }
-        });
-
-        figures.to_vec()
-    }
-
-    pub fn remove_duplicated_card(figures: &mut Vec<Figure>) -> Vec<Figure> {
-        let mut already_seen = vec![];
-        figures.retain(|item| match already_seen.contains(item) {
-            true => false,
-            _ => {
-                already_seen.push(item.clone());
-                true
-            }
-        });
-
-        figures.to_vec()
-    }
-
-    pub fn descending_pairs(cards: &mut Vec<&Card>) -> Vec<Figure> {
-        let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
-        let mut duplicated_cards: Vec<Figure> = CardComparer::get_duplicated_card(&mut figures);
-        let mut removed_repeating_duplicates: Vec<Figure> = CardComparer::remove_duplicated_card(&mut duplicated_cards);
-
-        removed_repeating_duplicates.sort_by(|a,b| b.cmp(&a));
-
-        return removed_repeating_duplicates
-    }
 
     pub fn check_four_of_a_kind(cards: &mut Vec<&Card>) -> Hands {
         
@@ -143,13 +111,10 @@ impl CardComparer {
             previous_figure = figure_index;
         }
         if (three_cards_figure != Figure::None && two_cards_figure != Figure::None) {
-            println!("FullHouse!");
             return Hands::FullHouse(three_cards_figure)
         }
-        println!("Hands::None!");
         Hands::None
     }
-
 
     pub fn check_flush(cards: &mut Vec<&Card>) -> Hands {
         
@@ -165,7 +130,6 @@ impl CardComparer {
             if (_i > 0) {
                 if (suit_actual == suit_previous) {
                     if (counter == 4) {
-                        println!("Flush!");
                         return Hands::Flush(*suit)
                     }
                     counter += 1;
@@ -176,7 +140,6 @@ impl CardComparer {
             }
             suit_previous = suit_actual;
         }
-        println!("Hands:None!");
         Hands::None
     }
 
@@ -194,7 +157,6 @@ impl CardComparer {
             if (_i > 0) {
                 if (figure_index_previous - figure_index == 1) {
                     if (counter == 4) {
-                        println!("Straight!");
                         return Hands::Straight(figures[_i - (4 as usize)])
                     }
                     counter += 1;
@@ -205,7 +167,6 @@ impl CardComparer {
             }
             figure_index_previous = figure_index;
         }
-        println!("Hands:None!");
         Hands::None
     }
 
@@ -218,10 +179,8 @@ impl CardComparer {
         duplicated_figures.sort_by(|a,b| b.cmp(&a));
 
         if duplicated_figures.len() > 0 {
-            println!("Three of a kind!");
             return Hands::ThreeOfAKind(*&duplicated_figures[0]);
         }
-        println!("Hands:None!");
         Hands::None
     }
 
@@ -230,10 +189,8 @@ impl CardComparer {
         let descending_pairs: Vec<Figure> = CardComparer::descending_pairs(cards);
 
         if descending_pairs.len() > 0 {
-            println!("OnePair!");
             return Hands::OnePair(*&descending_pairs[0])
         }
-        println!("Hands:None!");
         Hands::None
     }
 
@@ -242,17 +199,50 @@ impl CardComparer {
         let descending_pairs: Vec<Figure> = CardComparer::descending_pairs(cards);
 
         if descending_pairs.len() > 1 {
-            println!("TwoPairs!");
             return Hands::TwoPairs(*&descending_pairs[0], *&descending_pairs[1])
         }
-        println!("Hands:None!");
         Hands::None
     }
 
     pub fn check_high_card(cards: &mut Vec<&Card>) -> Hands {
         cards.sort_by(|a,b| b.figure.cmp(&a.figure));
-        println!("HighCard!");
         Hands::HighCard(*&cards[0].figure)
+    }
+
+    pub fn get_duplicated_card(figures: &mut Vec<Figure>) -> Vec<Figure> {
+        let mut already_seen = vec![];
+        figures.retain(|item| match already_seen.contains(item) {
+            true => true,
+            _ => {
+                already_seen.push(item.clone());
+                false
+            }
+        });
+
+        figures.to_vec()
+    }
+
+    pub fn remove_duplicated_card(figures: &mut Vec<Figure>) -> Vec<Figure> {
+        let mut already_seen = vec![];
+        figures.retain(|item| match already_seen.contains(item) {
+            true => false,
+            _ => {
+                already_seen.push(item.clone());
+                true
+            }
+        });
+
+        figures.to_vec()
+    }
+
+    pub fn descending_pairs(cards: &mut Vec<&Card>) -> Vec<Figure> {
+        let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
+        let mut duplicated_cards: Vec<Figure> = CardComparer::get_duplicated_card(&mut figures);
+        let mut removed_repeating_duplicates: Vec<Figure> = CardComparer::remove_duplicated_card(&mut duplicated_cards);
+
+        removed_repeating_duplicates.sort_by(|a,b| b.cmp(&a));
+
+        return removed_repeating_duplicates
     }
 }
 
@@ -261,8 +251,8 @@ impl CardComparer {
 mod card_comparer_tests {
     use super::*;
 
-    fn push_all_cards(card1: Card, card2: Card, card3: Card, card4: Card, card5: Card, card6: Card, card7: Card) -> Vec<Card> {
-        let mut cards: Vec<Card> = Vec::new();
+    fn push_all_cards<'a>(card1: &'a Card, card2: &'a Card, card3: &'a Card, card4: &'a Card, card5: &'a Card, card6: &'a Card, card7: &'a Card) -> Vec<&'a Card> {
+        let mut cards: Vec<&Card> = Vec::new();
         cards.push(card1);
         cards.push(card2);
         cards.push(card3);
@@ -286,7 +276,7 @@ mod card_comparer_tests {
          let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
          let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
  
-         let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+         let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
  
          assert_eq!(
              CardComparer::check_four_of_a_kind(&mut cards), 
@@ -304,7 +294,7 @@ mod card_comparer_tests {
          let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
          let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
  
-         let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+         let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
  
          assert_eq!(
              CardComparer::check_four_of_a_kind(&mut cards), 
@@ -322,7 +312,7 @@ mod card_comparer_tests {
          let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
          let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Five};
  
-         let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+         let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
  
          assert_eq!(
              CardComparer::check_four_of_a_kind(&mut cards), 
@@ -331,6 +321,24 @@ mod card_comparer_tests {
      }
 
     // CHECK FULL HOUSE
+
+    #[test]
+    fn check_full_house_with_three_8_shouldnt_return_hands_full_house() {
+        let card1: Card = Card {suit: Suit::Clubs, figure: Figure::Queen};
+        let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Eight};
+        let card3: Card = Card {suit: Suit::Spades, figure: Figure::Eight};
+        let card4: Card = Card {suit: Suit::Diamonds, figure: Figure::Eight};
+        let card5: Card = Card {suit: Suit::Spades, figure: Figure::Seven};
+        let card6: Card = Card {suit: Suit::Diamonds, figure: Figure::Three};
+        let card7: Card = Card {suit: Suit::Diamonds, figure: Figure::Two};
+
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
+
+        assert_ne!(
+            CardComparer::check_full_house(&mut cards), 
+            Hands::FullHouse(Figure::Eight)
+        );
+    }
 
     #[test]
     fn check_full_house_with_two_5_and_three_jacks_should_return_hands_full_house() {
@@ -342,7 +350,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Five};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_full_house(&mut cards), 
@@ -360,7 +368,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Eight};
         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Eight};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_full_house(&mut cards), 
@@ -378,7 +386,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Seven};
         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Two};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_full_house(&mut cards), 
@@ -396,7 +404,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Seven};
         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Two};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_full_house(&mut cards), 
@@ -414,7 +422,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Five};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_full_house(&mut cards), 
@@ -434,7 +442,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Seven};
         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Three};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_flush(&mut cards), 
@@ -452,7 +460,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Four};
         let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Three};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_flush(&mut cards), 
@@ -472,7 +480,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Seven};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Three};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_straight(&mut cards), 
@@ -490,7 +498,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Seven};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Ten};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_straight(&mut cards), 
@@ -508,7 +516,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_straight(&mut cards), 
@@ -526,7 +534,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_straight(&mut cards), 
@@ -544,7 +552,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Two};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_straight(&mut cards), 
@@ -562,7 +570,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::King};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_straight(&mut cards), 
@@ -582,7 +590,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_three_of_a_kind(&mut cards), 
@@ -600,7 +608,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Six};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_three_of_a_kind(&mut cards), 
@@ -618,7 +626,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_three_of_a_kind(&mut cards), 
@@ -638,7 +646,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_two_pairs(&mut cards), 
@@ -656,7 +664,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Ten};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_two_pairs(&mut cards), 
@@ -674,7 +682,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_two_pairs(&mut cards), 
@@ -694,7 +702,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_one_pair(&mut cards), 
@@ -712,7 +720,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Four};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_one_pair(&mut cards), 
@@ -730,7 +738,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Queen};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_one_pair(&mut cards), 
@@ -748,7 +756,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::King};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::King};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_one_pair(&mut cards), 
@@ -766,7 +774,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_one_pair(&mut cards), 
@@ -784,7 +792,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_one_pair(&mut cards), 
@@ -804,7 +812,7 @@ mod card_comparer_tests {
         let card6: Card = Card {suit: Suit::Hearts, figure: Figure::Ace};
         let card7: Card = Card {suit: Suit::Hearts, figure: Figure::Three};
 
-        let mut cards: Vec<Card> = push_all_cards(card1, card2, card3, card4, card5, card6, card7);
+        let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
 
         assert_eq!(
             CardComparer::check_high_card(&mut cards), 
