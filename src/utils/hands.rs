@@ -39,15 +39,47 @@ impl CardComparer {
             } 
 
             let mut hands: Hands = Hands::None;
+            let mut hands_review: Hands = Hands::None;
 
-            hands = CardComparer::check_high_card(&mut cards);
-            hands = CardComparer::check_one_pair(&mut cards);
-            hands = CardComparer::check_two_pairs(&mut cards);
-            hands = CardComparer::check_three_of_a_kind(&mut cards);
-            hands = CardComparer::check_straight(&mut cards);
-            hands = CardComparer::check_flush(&mut cards);
-            hands = CardComparer::check_full_house(&mut cards);
-            hands = CardComparer::check_four_of_a_kind(&mut cards);
+            hands_review = CardComparer::check_high_card(&mut cards);
+            if (hands_review != Hands::None) {
+                hands = hands_review;
+            }
+
+            hands_review = CardComparer::check_one_pair(&mut cards);
+            if (hands_review != Hands::None) {
+                hands = hands_review;
+            }
+
+            hands_review = CardComparer::check_two_pairs(&mut cards);
+            if (hands_review != Hands::None) {
+                hands = hands_review;
+            }
+
+            hands_review = CardComparer::check_three_of_a_kind(&mut cards);
+            if (hands_review != Hands::None) {
+                hands = hands_review;
+            }
+
+            hands_review = CardComparer::check_straight(&mut cards);
+            if (hands_review != Hands::None) {
+                hands = hands_review;
+            }
+
+            hands_review = CardComparer::check_flush(&mut cards);
+            if (hands_review != Hands::None) {
+                hands = hands_review;
+            }
+
+            hands_review = CardComparer::check_full_house(&mut cards);
+            if (hands_review != Hands::None) {
+                hands = hands_review;
+            }
+
+            hands_review = CardComparer::check_four_of_a_kind(&mut cards);
+            if (hands_review != Hands::None) {
+                hands = hands_review;
+            }
 
             for card in cards {
                 print!("card: {} \t", card);
@@ -246,10 +278,52 @@ impl CardComparer {
     }
 }
 
+// SPLIT this tests into modules
+
+#[cfg(test)]
+mod get_better_hands_tests {
+    use super::*;
+
+    // fn push_all_cards<'a>(card1: &'a Card, card2: &'a Card, card3: &'a Card, card4: &'a Card, card5: &'a Card, card6: &'a Card, card7: &'a Card) -> Vec<&'a Card> {
+    //     let mut cards: Vec<&Card> = Vec::new();
+    //     cards.push(card1);
+    //     cards.push(card2);
+    //     cards.push(card3);
+    //     cards.push(card4);
+    //     cards.push(card5);
+    //     cards.push(card6);
+    //     cards.push(card7);
+
+    //     cards
+    // }
+
+    //  #[test]
+    //  fn check_four_a_kind_with_four_jacks_should_return_hands_four_of_a_kind() {
+    //      let card1: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+    //      let card2: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+    //      let card3: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+    //      let card4: Card = Card {suit: Suit::Hearts, figure: Figure::Jack};
+    //      let card5: Card = Card {suit: Suit::Hearts, figure: Figure::Five};
+    //      let card6: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+    //      let card7: Card = Card {suit: Suit::Clubs, figure: Figure::Jack};
+ 
+    //      let mut cards: Vec<&Card> = push_all_cards(&card1, &card2, &card3, &card4, &card5, &card6, &card7);
+ 
+    //      assert_eq!(
+    //          CardComparer::check_four_of_a_kind(&mut cards), 
+    //          Hands::FourOfAKind(Figure::Jack)
+    //      );
+    //  }
+    
+}
+
+
+
 
 #[cfg(test)]
 mod card_comparer_tests {
     use super::*;
+
 
     fn push_all_cards<'a>(card1: &'a Card, card2: &'a Card, card3: &'a Card, card4: &'a Card, card5: &'a Card, card6: &'a Card, card7: &'a Card) -> Vec<&'a Card> {
         let mut cards: Vec<&Card> = Vec::new();
