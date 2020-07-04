@@ -1,23 +1,22 @@
+use std::cmp::Ordering;
 use itertools::Itertools;
 use std::collections::HashMap;
 
 use crate::utils::card::*;
 use crate::utils::player::Player;
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum Hands {
     None,
-    HighCard(Figure),
-    OnePair(Figure),
-    TwoPairs(Figure, Figure),
-    ThreeOfAKind(Figure),
-    Straight(Figure),
-    Flush(Suit),
-    FullHouse(Figure),
-    FourOfAKind(Figure),
-    StraightFlush(Card),
-    RoyalFlush,
+    HighCard,
+    OnePair,
+    TwoPairs,
+    ThreeOfAKind,
+    Straight,
+    Flush,
+    FullHouse,
+    FourOfAKind,
+    Poker,
 }
 
 #[derive(Debug, Clone)]
@@ -39,48 +38,9 @@ impl CardComparer {
             } 
 
             let mut hands: Hands = Hands::None;
-            let mut hands_review: Hands = Hands::None;
 
-            hands_review = CardComparer::check_high_card(&mut cards);
-            if (hands_review != Hands::None) {
-                hands = hands_review;
-            }
-
-            hands_review = CardComparer::check_one_pair(&mut cards);
-            if (hands_review != Hands::None) {
-                hands = hands_review;
-            }
-
-            hands_review = CardComparer::check_two_pairs(&mut cards);
-            if (hands_review != Hands::None) {
-                hands = hands_review;
-            }
-
-            hands_review = CardComparer::check_three_of_a_kind(&mut cards);
-            if (hands_review != Hands::None) {
-                hands = hands_review;
-            }
-
-            hands_review = CardComparer::check_straight(&mut cards);
-            if (hands_review != Hands::None) {
-                hands = hands_review;
-            }
-
-            hands_review = CardComparer::check_flush(&mut cards);
-            if (hands_review != Hands::None) {
-                hands = hands_review;
-            }
-
-            hands_review = CardComparer::check_full_house(&mut cards);
-            if (hands_review != Hands::None) {
-                hands = hands_review;
-            }
-
-            hands_review = CardComparer::check_four_of_a_kind(&mut cards);
-            if (hands_review != Hands::None) {
-                hands = hands_review;
-            }
-
+            let (hands, ms_figure, ss_figure, ts_figure) = CardComparer::evaluate_hand(&cards);
+            
             for card in cards {
                 print!("card: {} \t", card);
             }
@@ -89,7 +49,44 @@ impl CardComparer {
         }
     } 
 
-    pub fn check_four_of_a_kind(cards: &mut Vec<&Card>) -> Hands {
+    pub fn evaluate_hand<'a>(cards: &Vec<&Card>) -> (Hands, Figure, Option<Figure>, Option<Figure>) {
+        if let Some(poker) = CardComparer::check_poker(&mut cards) { return poker; }
+        if let Some(four_of_a_kind) = CardComparer::check_four_of_a_kind(&mut cards) { return four_of_a_kind; }
+        if let Some(full_house) = CardComparer::check_full_house(&mut cards) { return full_house; }
+        if let Some(check_flush) = CardComparer::check_flush(&mut cards) { return check_flush; }
+        if let Some(straight) = CardComparer::check_straight(&mut cards) { return straight; }
+        if let Some(three_of_a_kind) = CardComparer::check_three_of_a_kind(&mut cards) { return three_of_a_kind; }
+        if let Some(two_pairs) = CardComparer::check_two_pairs(&mut cards) { return two_pairs; }
+        if let Some(one_pair) = CardComparer::check_one_pair(&mut cards) { return one_pair; }
+        let Some((high_card, ms_figure, ss_figure, ts_figure)) = CardComparer::check_high_card(&mut cards);
+        (high_card, ms_figure, ss_figure, ts_figure)
+    }
+
+    pub fn check_poker(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)> {
+        // for i in 0..=2 {
+        //     let (a,b,c,d,e) = (&cards[i], &cards[i + 1], &cards[i + 2], &cards[i + 3], &cards[i +4]);
+        //     if  a.figure as i32 - 1 == b.figure as i32 &&
+        //         b.figure as i32 - 1 == c.figure as i32 &&
+        //         c.figure as i32 - 1 == d.figure as i32 &&
+        //         d.figure as i32 - 1 == e.figure as i32 {
+        //             if a.suit == b.suit &&
+        //                 b.suit == c.suit &&
+        //                 c.suit == d.suit &&
+        //                 d.suit == e.suit {
+        //                     let mut duplicated_figures: Vec<Figure> = CardComparer::get_duplicated_card(&mut figures);
+        //                     return Hands::Poker(CardLayout::Poker(a.clone(), b.clone(), c.clone(), 
+        //                                                   d.clone(), e.clone()));
+        //             } else {
+        //                 return Hands::None;
+        //             }
+        //     } else {
+        //         return Hands::None;
+        //     }
+        // }
+        None
+    }
+
+    pub fn check_four_of_a_kind(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)> {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         figures.sort_by(|a,b| b.cmp(&a));
@@ -101,13 +98,13 @@ impl CardComparer {
         duplicated_figures.sort_by(|a,b| b.cmp(&a));
 
         if duplicated_figures.len() > 0 {
-            return Hands::FourOfAKind(*&duplicated_figures[0]);
+            return Some({(Hands::FourOfAKind, *&duplicated_figures[0], None, None)});
         }
       
-        Hands::None
+        None
     }
 
-    pub fn check_full_house(cards: &mut Vec<&Card>) -> Hands {
+    pub fn check_full_house(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)> {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         figures.sort_by(|a,b| b.cmp(&a));
@@ -121,16 +118,16 @@ impl CardComparer {
 
         for (_i, figure) in figures.iter().enumerate() {
             figure_index = *figure as i8;
-            if (_i > 0) {
-                if (previous_figure == figure_index) {
+            if _i > 0 {
+                if previous_figure == figure_index {
                     counter += 1;
-                    if (counter > 2) {
-                        if (three_cards_figure == Figure::None) {
+                    if counter > 2 {
+                        if three_cards_figure == Figure::None {
                             three_cards_figure = figures[_i];
                         }
                     }
-                    if (counter > 1) {
-                        if (two_cards_figure == Figure::None) {
+                    if counter > 1 {
+                        if two_cards_figure == Figure::None {
                             two_cards_figure = figures[_i];
                         }
                     }
@@ -142,13 +139,13 @@ impl CardComparer {
            
             previous_figure = figure_index;
         }
-        if (three_cards_figure != Figure::None && two_cards_figure != Figure::None) {
-            return Hands::FullHouse(three_cards_figure)
+        if three_cards_figure != Figure::None && two_cards_figure != Figure::None {
+            return Some({(Hands::FullHouse, three_cards_figure, None, None)});
         }
-        Hands::None
+        None
     }
 
-    pub fn check_flush(cards: &mut Vec<&Card>) -> Hands {
+    pub fn check_flush(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)> {
         
         let mut suits: Vec<Suit> = cards.iter().map(|x| x.suit).collect();
         suits.sort_by(|a,b| b.cmp(&a));
@@ -159,10 +156,10 @@ impl CardComparer {
 
         for (_i, suit) in suits.iter().enumerate() {
             suit_actual = *suit as i8;
-            if (_i > 0) {
-                if (suit_actual == suit_previous) {
-                    if (counter == 4) {
-                        return Hands::Flush(*suit)
+            if _i > 0 {
+                if suit_actual == suit_previous {
+                    if counter == 4 {
+                        return Some({(Hands::Flush, cards[0].figure, None, None)});
                     }
                     counter += 1;
                 }
@@ -172,10 +169,10 @@ impl CardComparer {
             }
             suit_previous = suit_actual;
         }
-        Hands::None
+        None
     }
 
-    pub fn check_straight(cards: &mut Vec<&Card>) -> Hands {
+    pub fn check_straight(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)> {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         figures.sort_by(|a,b| b.cmp(&a));
@@ -186,10 +183,10 @@ impl CardComparer {
 
         for (_i, figure) in figures.iter().enumerate() {
             figure_index = *figure as i8;
-            if (_i > 0) {
-                if (figure_index_previous - figure_index == 1) {
-                    if (counter == 4) {
-                        return Hands::Straight(figures[_i - (4 as usize)])
+            if _i > 0 {
+                if figure_index_previous - figure_index == 1 {
+                    if counter == 4 {
+                        return Some({(Hands::Straight, figures[_i - (4 as usize)], None, None)});
                     }
                     counter += 1;
                 }
@@ -199,10 +196,10 @@ impl CardComparer {
             }
             figure_index_previous = figure_index;
         }
-        Hands::None
+        None
     }
 
-    pub fn check_three_of_a_kind(cards: &mut Vec<&Card>) -> Hands {
+    pub fn check_three_of_a_kind(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)> {
         
         let mut figures: Vec<Figure> = cards.iter().map(|x| x.figure).collect();
         let mut duplicated_figures: Vec<Figure> = CardComparer::get_duplicated_card(&mut figures);
@@ -211,34 +208,34 @@ impl CardComparer {
         duplicated_figures.sort_by(|a,b| b.cmp(&a));
 
         if duplicated_figures.len() > 0 {
-            return Hands::ThreeOfAKind(*&duplicated_figures[0]);
+            return Some({(Hands::ThreeOfAKind, *&duplicated_figures[0], Some(*&duplicated_figures[1]), None)});
         }
-        Hands::None
+        None
     }
 
-    pub fn check_one_pair(cards: &mut Vec<&Card>) -> Hands {
+    pub fn check_one_pair(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)>  {
 
         let descending_pairs: Vec<Figure> = CardComparer::descending_pairs(cards);
 
         if descending_pairs.len() > 0 {
-            return Hands::OnePair(*&descending_pairs[0])
+            return Some({(Hands::OnePair, *&descending_pairs[0], Some(*&descending_pairs[1]), None)});
         }
-        Hands::None
+        None
     }
 
-    pub fn check_two_pairs(cards: &mut Vec<&Card>) -> Hands {
+    pub fn check_two_pairs(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)> {
 
         let descending_pairs: Vec<Figure> = CardComparer::descending_pairs(cards);
 
         if descending_pairs.len() > 1 {
-            return Hands::TwoPairs(*&descending_pairs[0], *&descending_pairs[1])
+            return Some({(Hands::TwoPairs, *&descending_pairs[0], Some(*&descending_pairs[1]), Some(*&descending_pairs[2]))});
         }
-        Hands::None
+        None
     }
 
-    pub fn check_high_card(cards: &mut Vec<&Card>) -> Hands {
+    pub fn check_high_card(cards: &mut Vec<&Card>) -> Option<(Hands, Figure, Option<Figure>, Option<Figure>)> {
         cards.sort_by(|a,b| b.figure.cmp(&a.figure));
-        Hands::HighCard(*&cards[0].figure)
+        Some({(Hands::HighCard, *&cards[0].figure, None, None)})
     }
 
     pub fn get_duplicated_card(figures: &mut Vec<Figure>) -> Vec<Figure> {
