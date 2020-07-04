@@ -8,7 +8,7 @@ use crate::utils::card::*;
 
 fn main() {
     println!("Hello in Poker Rust! \nWould you like to start? Y / N");
-    match read_line().trim() {
+    match &*read_line().trim().to_uppercase() {
         "Y" => (),
         "N" => { 
             println!("Thank you for your time! :)");
