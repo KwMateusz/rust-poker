@@ -51,13 +51,6 @@ impl Table {
                 } 
             } 
         } 
-        
-        //println!("{:?}", self);
-        //println!("Players[0] hand{:?}", players[0].hand);
-        //println!("Players[1] hand{:?}", players[1].hand);
-        //println!("")
-
-        //players.pop().unwrap() // only for return purpose
     }
 
     pub fn collect_reward(&mut self, player: &mut Player) {

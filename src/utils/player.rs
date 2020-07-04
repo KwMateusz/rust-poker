@@ -43,7 +43,7 @@ impl Player {
 
     pub fn show_cards(&self) {
         if let Some((first, second)) = &self.hand {
-            println!("Your cards: {}\t {}", first, second);
+            println!("[{}  {}]", first, second);
         } else {
             println!("Could not show the cards");
         }
@@ -55,11 +55,11 @@ impl Player {
     }
 
     pub fn make_decision(&mut self, to_call: &mut u32) {
-        println!("***** Player {} makes action *****", self.name);
+        print!("\n[{}]: \t", self.name);
         self.show_cards();
 
         'decision: loop {
-            println!("What is your decision?\nBET\tCHECK\tPASS\tCALL");
+            println!("What is your decision?\t[BET]\t[CHECK]\t[PASS]\t[CALL]");
             match &*read_line().trim().to_uppercase() {
                 "BET" => {
                     'bet: loop {
