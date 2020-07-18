@@ -124,8 +124,8 @@ impl Round {
         if players.len() == 1 {
             self.table.collect_reward(players.pop().unwrap());
         } else {
-            self.table.compare_cards(players);
-            //self.table.collect_reward(winner);
+            let winner = self.table.compare_cards(players);
+            self.table.collect_reward(winner);
         }
     }
 }
